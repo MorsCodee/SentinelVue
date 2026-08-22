@@ -1,0 +1,16 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Model weights (big files, we'll handle separately)
+*.pt
+
+# Node
+node_modules/
+frontend/dist/
+
+# OS junk
+.DS_Store
+Thumbs.db
