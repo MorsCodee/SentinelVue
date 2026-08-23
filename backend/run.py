@@ -4,8 +4,10 @@ import redis
 from flask import Flask, request
 from flask_socketio import SocketIO
 from celery_worker import run_detection_task, celery_app
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 UPLOAD_FOLDER = "uploads"
