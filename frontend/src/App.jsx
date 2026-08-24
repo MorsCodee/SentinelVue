@@ -157,9 +157,20 @@ function App() {
           )}
 
           {uploadStatus === "done" && result && (
-            <div className="font-mono text-xs text-cyan">
-              ✓ ANALYSIS COMPLETE — {result.total_detections} DETECTIONS ACROSS{" "}
-              {result.frames_processed} FRAMES
+            <div className="w-full">
+              <p className="font-mono text-xs text-cyan mb-4">
+                ANALYSIS COMPLETE — {result.total_detections} DETECTIONS ACROSS{" "}
+                {result.frames_processed} FRAMES
+              </p>
+
+              <div className="relative border border-line">
+                <CornerBrackets color="cyan" />
+                <video
+                  controls
+                  className="w-full block"
+                  src={`http://127.0.0.1:5000/api/video/${result.annotated_video}`}
+                />
+              </div>
             </div>
           )}
 
