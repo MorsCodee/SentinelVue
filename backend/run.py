@@ -1,10 +1,13 @@
 import os
 import json
 import redis
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_socketio import SocketIO
 from celery_worker import run_detection_task, celery_app
 from flask_cors import CORS
+from qdrant_client import QdrantClient
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app) 
@@ -48,6 +51,39 @@ def check_status(task_id):
         return {"state": task.state, "error": str(task.info)}
     else:
         return {"state": task.state}
+
+@app.route("/api/video/<filename>", methods=["GET"])
+def get_video(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+# 
+qdrant_client = QdrantClient(
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API_KEY"),
+)
+
+@app.route("/api/similar/<point_id>", methods=["GET"])
+def find_similar(point_id):
+    results = qdrant_client.query_points(
+        collection_name="anomaly_events",
+        query=point_id,
+        limit=6,  # 6, so we can drop the first if it's the point itself
+    )
+
+    matches = []
+    for point in results.points:
+        if str(point.id) == point_id:
+            continue  # skip itself, we only want OTHER similar detections
+        matches.append({
+            "id": str(point.id),
+            "score": point.score,
+            "video_filename": point.payload.get("video_filename"),
+            "frame": point.payload.get("frame"),
+            "class_name": point.payload.get("class_name"),
+            "confidence": point.payload.get("confidence"),
+        })
+
+    return {"matches": matches[:5]}, 200
 
 @socketio.on("connect")
 def handle_connect():
