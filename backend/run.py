@@ -6,8 +6,10 @@ from flask_socketio import SocketIO
 from celery_worker import run_detection_task, celery_app
 from flask_cors import CORS
 from qdrant_client import QdrantClient
+from agent import analyze_detection
 from dotenv import load_dotenv
 load_dotenv()
+
 
 app = Flask(__name__)
 CORS(app) 
@@ -56,6 +58,33 @@ def check_status(task_id):
 def get_video(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
+from agent import analyze_detection
+
+@app.route("/api/analyze/<point_id>", methods=["GET"])
+def analyze(point_id):
+    # Fetch the point's own metadata first, so we know what we're analyzing
+    points = qdrant_client.retrieve(
+        collection_name="anomaly_events",
+        ids=[point_id],
+        with_payload=True,
+    )
+
+    if not points:
+        return {"error": "Detection not found"}, 404
+
+    payload = points[0].payload
+
+    assessment = analyze_detection(
+        point_id=point_id,
+        class_name=payload.get("class_name"),
+        confidence=payload.get("confidence"),
+    )
+
+    return {
+        "point_id": point_id,
+        "class_name": payload.get("class_name"),
+        "assessment": assessment,
+    }, 200
 # 
 qdrant_client = QdrantClient(
     url=os.getenv("QDRANT_URL"),
