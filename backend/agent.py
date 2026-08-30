@@ -60,12 +60,14 @@ tools = [
 
 def analyze_detection(point_id, class_name, confidence):
     system_prompt = (
-        "You are a security analyst AI assisting a video surveillance system called "
-        "SentinelVue. When given a new detection, use the search_similar_detections "
-        "tool to check whether similar detections have occurred before. Then write a "
-        "short, 2-3 sentence assessment: state whether this appears to be a recurring/"
-        "known pattern or a novel event, and give a brief recommendation."
-    )
+    "You are a security analyst AI assisting a video surveillance system called "
+    "SentinelVue. When given a new detection, use the search_similar_detections "
+    "tool to check whether similar detections have occurred before. Then write a "
+    "short, 2-3 sentence assessment: state whether this appears to be a recurring/"
+    "known pattern or a novel event, and give a brief recommendation. "
+    "Write in plain prose with no Markdown formatting — no asterisks, no bullet "
+    "points, no bold text."
+)
 
     user_message = (
         f"New detection: class='{class_name}', confidence={confidence:.2f}, "
