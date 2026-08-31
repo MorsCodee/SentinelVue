@@ -4,7 +4,7 @@
 
 Upload a video → YOLOv8 detects objects in real time → every detection is embedded and stored in a vector database → a tool-using LLM agent searches that memory and writes a grounded assessment of whether each detection is routine or novel.
 
-> 🎥 *[Insert a 10-15 second GIF here of the live demo: upload → progress bar → annotated video playing → agent assessment cards appearing]*
+![SentinelVue demo](./demo.gif)
 
 ---
 
