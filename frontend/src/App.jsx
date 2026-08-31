@@ -159,11 +159,11 @@ function App() {
           {uploadStatus === "done" && result && (
             <div className="w-full">
               <p className="font-mono text-xs text-cyan mb-4">
-                ANALYSIS COMPLETE — {result.total_detections} DETECTIONS ACROSS{" "}
+                ✓ ANALYSIS COMPLETE — {result.total_detections} DETECTIONS ACROSS{" "}
                 {result.frames_processed} FRAMES
               </p>
 
-              <div className="relative border border-line">
+              <div className="relative border border-line mb-6">
                 <CornerBrackets color="cyan" />
                 <video
                   controls
@@ -171,6 +171,38 @@ function App() {
                   src={`http://127.0.0.1:5000/api/video/${result.annotated_video}`}
                 />
               </div>
+
+              {result.agent_insights && result.agent_insights.length > 0 && (
+                <div className="text-left">
+                  <p className="font-display uppercase tracking-wide text-sm mb-3 text-ink">
+                    Agent Assessment
+                  </p>
+
+                  <div className="space-y-3">
+                    {result.agent_insights.map((insight) => (
+                      <div
+                        key={insight.point_id}
+                        className="relative border border-line bg-bg p-5"
+                      >
+                        <CornerBrackets color="amber" />
+
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-mono text-xs uppercase text-amber border border-amber px-2 py-0.5">
+                            {insight.class_name}
+                          </span>
+                          <span className="font-mono text-xs text-muted">
+                            CONFIDENCE {(insight.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+
+                        <p className="font-body text-sm text-ink leading-relaxed">
+                          {insight.assessment}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
