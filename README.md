@@ -164,4 +164,4 @@ Visit `http://localhost:5173`.
 ## Author
 
 Built by Mehak Faheem
-- LinkedIn: [your-profile](https://www.linkedin.com/in/mehakfaheem)
+- LinkedIn: [Mehak Faheem](https://www.linkedin.com/in/mehakfaheem)
