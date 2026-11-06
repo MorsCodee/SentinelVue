@@ -58,8 +58,6 @@ def check_status(task_id):
 def get_video(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-from agent import analyze_detection
-
 @app.route("/api/analyze/<point_id>", methods=["GET"])
 def analyze(point_id):
     # Fetch the point's own metadata first, so we know what we're analyzing
