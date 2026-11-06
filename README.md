@@ -10,7 +10,7 @@ Upload a video → YOLOv8 detects objects in real time → every detection is em
 
 ## Why this exists
 
-Most portfolio computer vision projects stop at "here's a YOLO model with a Flask API." SentinelVue goes further: it's built as an end-to-end **production-style async system**, combining computer vision with the infrastructure patterns (async task queues, real-time streaming, vector search, agentic tool-use) that real ML/AI-infra teams actually run in production.
+SentinelVue goes beyond a single detection model behind an API. It's built as an end-to-end **production-style async system**, combining computer vision with the infrastructure patterns (async task queues, real-time streaming, vector search, agentic tool-use) that real ML/AI-infra teams run in production.
 
 ---
 
@@ -36,7 +36,7 @@ flowchart TD
     H -->|Playable video| A
 ```
 
-**The flow in plain English:** a video is uploaded and immediately queued for background processing — the user gets an instant response instead of a frozen page. A Celery worker picks up the job, runs YOLOv8 detection frame-by-frame, and streams live progress back over WebSockets. Every 10th frame's detections are cropped, embedded with CLIP, and stored in Qdrant as vector memory. Once processing finishes, the two highest-confidence detections are handed to an LLM agent, which decides *for itself* whether to search that vector memory for similar past events, then writes a short, grounded assessment — recurring pattern or novel event.
+**The flow:** a video is uploaded and immediately queued for background processing — the user gets an instant response instead of a frozen page. A Celery worker picks up the job, runs YOLOv8 detection frame-by-frame, and streams live progress back over WebSockets. Every 10th frame's detections are cropped, embedded with CLIP, and stored in Qdrant as vector memory. Once processing finishes, the two highest-confidence detections are handed to an LLM agent, which decides *for itself* whether to search that vector memory for similar past events, then writes a short assessment grounded in the retrieved data — recurring pattern or novel event.
 
 ---
 
@@ -46,8 +46,8 @@ flowchart TD
 - **Live progress streaming** — WebSockets (Flask-SocketIO) push real-time frame-by-frame progress to the UI, no polling
 - **Object detection** — YOLOv8 (CPU-only inference)
 - **Browser-compatible output** — automatic H.264 re-encoding via FFmpeg (OpenCV's default codec isn't browser-playable — a real gotcha this project surfaced and solved)
-- **Vector memory** — every detection embedded via CLIP and stored in Qdrant Cloud, enabling similarity search over visual events
-- **Agentic reasoning** — a Groq-hosted LLM agent with real tool-use: it decides when to query the vector database and writes a grounded, non-hallucinated assessment based on actual retrieved data
+- **Vector memory** — every sampled detection embedded via CLIP and stored in Qdrant Cloud, enabling similarity search over visual events
+- **Agentic reasoning** — a Groq-hosted LLM agent with real tool-use: it decides when to query the vector database and writes an assessment grounded in the retrieved data
 - **Custom design system** — a from-scratch UI (no template), built around a "daylight ops" visual identity with a recurring corner-bracket motif
 
 ---
@@ -79,6 +79,34 @@ A few deliberate tradeoffs made during this build — the kind of thing worth di
 
 ---
 
+## Performance
+
+Inference speed benchmark of the YOLOv8n detector, comparing PyTorch and ONNX Runtime on CPU.
+
+| Runtime | Latency (ms/frame) | Throughput (FPS) |
+|---|---|---|
+| PyTorch (CPU) | 131.7 | 7.6 |
+| ONNX Runtime (CPU) | 189.7 | 5.3 |
+
+**Setup:** Google Colab CPU runtime (Intel Xeon @ 2.20 GHz), Ultralytics 8.4.203, PyTorch 2.14.1, ONNX Runtime 1.31.1, input size 640x640, 100 video frames, 5 warmup frames. Latency includes preprocessing, inference and NMS.
+
+**Scope:** this benchmark measures the YOLOv8n detector in isolation, not the full pipeline. CLIP embedding, Qdrant calls and the agent add their own latency.
+
+**Findings:**
+- On this shared Colab CPU, ONNX Runtime was slower than PyTorch for YOLOv8n. These are single-run numbers and Colab CPUs are noisy, so treat them as indicative, not exact.
+- Edge devices (Jetson, Raspberry Pi) may behave differently and have not been tested yet.
+
+**Reproduce:**
+```bash
+cd backend/benchmarks
+pip install ultralytics onnx onnxruntime
+python benchmark.py sample.mp4
+```
+
+**Next experiments:** OpenVINO export, INT8 quantization, and smaller input size (320x320).
+
+---
+
 ## Running it locally
 
 ### Prerequisites
@@ -103,7 +131,7 @@ QDRANT_API_KEY=your-qdrant-api-key
 GROQ_API_KEY=your-groq-api-key
 ```
 
-You'll need **three terminals** running simultaneously:
+Make sure Redis/Memurai is running, then open **two terminals** in `backend/`:
 ```bash
 # Terminal 1 — Flask API
 python run.py
@@ -126,6 +154,7 @@ Visit `http://localhost:5173`.
 ## What I'd build next
 
 - Multi-camera grid view, simulating a real ops-console with several concurrent feeds
+- Edge-oriented optimization: OpenVINO and INT8 quantization benchmarks
 - Batch vector upserts to reduce Qdrant network overhead
 - A human-in-the-loop approval step before any agent-drafted action is treated as final
 - Deployment via Docker Compose for one-command setup
@@ -135,3 +164,4 @@ Visit `http://localhost:5173`.
 ## Author
 
 Built by Mehak Faheem
+- LinkedIn: [your-profile](https://www.linkedin.com/in/mehakfaheem)
